@@ -21,6 +21,14 @@ class initializeServer implements RoutineInterface {
         $serverName = $serverDetails->serverName;
         $serverURL = $serverDetails->serverURL;
 
+        $this->createUIdFile();
+
+        if (file_exists(__DIR__ . '/config/uid.json')) {
+            $uidFile = file_get_contents(__DIR__ . '/config/uid.json');
+            $json = json_decode($uidFile);
+            $uid = $json->key;
+        }
+
         //Check to see if the serverName is set in the JSON else override.
         if (empty($serverName)) {
             $serverName = shell_exec('hostname');
@@ -31,13 +39,11 @@ class initializeServer implements RoutineInterface {
             die('serverURL is empty in the config/config.json');
         }
 
-        $serverUniqueId = shell_exec("sudo dmidecode -t 4 | grep ID | sed 's/.*ID://;s/ //g'");
-
         //next example will insert new conversation
         $service_url = $serverURL . '/api/initializeServer';
         $curl = curl_init($service_url);
         $curl_post_data = array(
-            'serverId' => $serverUniqueId,
+            'serverId' => $uid,
             'serverName' => $serverName
         );
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -55,5 +61,14 @@ class initializeServer implements RoutineInterface {
             die('error occured: ' . $decoded->response->errormessage);
         }
         echo 'response ok!';
+    }
+
+    public function createUIdFile() {
+        if (!file_exists(__DIR__ . '/config/uid.json')) {
+            $uId = shell_exec('cat /proc/sys/kernel/random/uuid');
+            $file = fopen(__DIR__ . '/config/uid.json', 'w');
+            fwrite($file, json_encode(['key' => $uId]));
+            fclose($file);
+        }
     }
 }

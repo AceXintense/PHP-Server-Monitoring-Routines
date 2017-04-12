@@ -17,7 +17,7 @@ class initializeServer extends requestController implements RoutineInterface {
     public function main($arguments) {
 
         //Check to see if the serverName is set in the JSON else override.
-        if (empty($serverName)) {
+        if (empty($this->serverName)) {
             $this->serverName = shell_exec('hostname');
         }
 
